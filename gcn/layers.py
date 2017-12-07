@@ -22,7 +22,9 @@ def sparse_dropout(x, keep_prob, noise_shape):
     """Dropout for sparse tensors."""
     random_tensor = keep_prob
     random_tensor += tf.random_uniform(noise_shape)
+    #tf.cast向下取整；tf.ceil向上取整
     dropout_mask = tf.cast(tf.floor(random_tensor), dtype=tf.bool)
+    #x是(x,y):val形式的“字典”式稀疏矩阵记录格式，dropout_mask是bool值列表来确定保留对应的val与否
     pre_out = tf.sparse_retain(x, dropout_mask)
     return pre_out * (1./keep_prob)
 
@@ -51,24 +53,24 @@ class Layer(object):
         _log_vars(): Log all variables
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):   #*args表示任何多个无名参数，它是一个tuple；**kwargs表示关键字参数，它是一个dict
         allowed_kwargs = {'name', 'logging'}
         for kwarg in kwargs.keys():
             assert kwarg in allowed_kwargs, 'Invalid keyword argument: ' + kwarg
         name = kwargs.get('name')
         if not name:
-            layer = self.__class__.__name__.lower()
+            layer = self.__class__.__name__.lower() #类（非对象）的名称小写
             name = layer + '_' + str(get_layer_uid(layer))
         self.name = name
         self.vars = {}
-        logging = kwargs.get('logging', False)
+        logging = kwargs.get('logging', False)  #get和dict['']的区别是后者在key没有的时候会报错，前者不会，且可设置默认值
         self.logging = logging
         self.sparse_inputs = False
 
     def _call(self, inputs):
         return inputs
 
-    def __call__(self, inputs):
+    def __call__(self, inputs):     #__call__将对象变为可调用的“函数”
         with tf.name_scope(self.name):
             if self.logging and not self.sparse_inputs:
                 tf.summary.histogram(self.name + '/inputs', inputs)
